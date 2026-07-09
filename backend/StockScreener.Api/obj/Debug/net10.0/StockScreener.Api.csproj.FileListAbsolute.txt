@@ -25,3 +25,4 @@
 /Users/thomaskirk/Desktop/stock-screener/backend/StockScreener.Api/obj/Debug/net10.0/StockScreener.Api.pdb
 /Users/thomaskirk/Desktop/stock-screener/backend/StockScreener.Api/obj/Debug/net10.0/StockScreener.Api.genruntimeconfig.cache
 /Users/thomaskirk/Desktop/stock-screener/backend/StockScreener.Api/obj/Debug/net10.0/ref/StockScreener.Api.dll
+/Users/thomaskirk/Desktop/stock-screener/backend/StockScreener.Api/obj/Debug/net10.0/StockScreener.Api.sourcelink.json

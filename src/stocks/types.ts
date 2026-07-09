@@ -98,6 +98,27 @@ export type StockListItem = Readonly<{
   id: string;
   name: string;
   description: string;
+  company: Company;
+  close: number;
+  type: string;
+  typespecs: readonly string[];
+  pricescale: number;
+  minmov: number;
+  fractional: string;
+  minmove2: number;
+  currency: string;
+  change: number;
+  perfWeek: number;
+  perfMonth: number;
+  perf3Months: number;
+  perf6Months: number;
+  perfYtd: number;
+  perfYear: number;
+  perf5Years: number;
+  perf10Years: number;
+  perfAll: number;
+  volatilityWeek: number;
+  volatilityMonth: number;
 }>;
 
 export type StocksQueryResult = Readonly<{
