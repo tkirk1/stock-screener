@@ -3,7 +3,7 @@ import {
   type StockListItem,
   type StocksQuery,
   type StocksQueryResult,
-} from "..";
+} from "@stocks";
 
 const stocksQuery: StocksQuery = {
   columns: [

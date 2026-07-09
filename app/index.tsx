@@ -11,8 +11,8 @@ import {
   useTheme,
 } from "react-native-paper";
 
-import type { StockListItem } from "../src/stocks";
-import { useStocksQuery } from "../src/stocks/query";
+import type { StockListItem } from "@stocks";
+import { useStocksQuery } from "@stocks/query";
 
 export default function StocksScreen() {
   const theme = useTheme();

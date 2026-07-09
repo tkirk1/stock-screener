@@ -1,7 +1,12 @@
 {
   "extends": "expo/tsconfig.base",
   "compilerOptions": {
-    "strict": true
+    "strict": true,
+    "baseUrl": ".",
+    "paths": {
+      "@stocks": ["./src/stocks"],
+      "@stocks/*": ["./src/stocks/*"]
+    }
   },
   "include": [
     "**/*.ts",

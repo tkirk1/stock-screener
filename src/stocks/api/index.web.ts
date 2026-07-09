@@ -1,4 +1,4 @@
-import { mapStockListItems, type StockListItem, type StocksQueryResult } from "..";
+import { mapStockListItems, type StockListItem, type StocksQueryResult } from "@stocks";
 
 const apiBaseUrl = "http://localhost:5080";
 
