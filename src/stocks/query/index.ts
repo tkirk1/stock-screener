@@ -1,7 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 
-import { fetchStockItems } from "@stocks/api";
-import { stocksQueryKey } from "@stocks/query/keys";
+import { fetchStockItems, fetchSymbolItems } from "@stocks/api";
+import { stocksQueryKey, symbolsQueryKey } from "@stocks/query/keys";
 
 export * from "@stocks/api";
 export * from "@stocks/query/keys";
@@ -12,5 +12,15 @@ export function useStocksQuery() {
     queryFn: fetchStockItems,
     staleTime: 1000 * 60 * 5,
     gcTime: 1000 * 60 * 30,
+  });
+}
+
+export function useSymbolsQuery(enabled = true) {
+  return useQuery({
+    queryKey: symbolsQueryKey,
+    queryFn: fetchSymbolItems,
+    enabled,
+    staleTime: 1000 * 60 * 60 * 24,
+    gcTime: 1000 * 60 * 60 * 24,
   });
 }

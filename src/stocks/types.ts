@@ -124,3 +124,19 @@ export type StockListItem = Readonly<{
 export type StocksQueryResult = Readonly<{
   data: readonly Stock[];
 }>;
+
+export type SymbolResult = Readonly<{
+  symbol: string;
+  statusCode: number;
+  isSuccessStatusCode: boolean;
+  data: SymbolData | null;
+  rawBody: string | null;
+}>;
+
+export type SymbolData = Readonly<{
+  "Recommend.All"?: number;
+  "Recommend.MA"?: number;
+  "Recommend.Other"?: number;
+  close?: number;
+  [key: string]: unknown;
+}>;
