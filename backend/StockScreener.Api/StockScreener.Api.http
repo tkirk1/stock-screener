@@ -1,0 +1,9 @@
+@StockScreener_Api_HostAddress = http://localhost:5080
+
+GET {{StockScreener_Api_HostAddress}}/health
+Accept: application/json
+
+###
+
+POST {{StockScreener_Api_HostAddress}}/api/scan
+Accept: application/json
