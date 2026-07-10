@@ -15,11 +15,11 @@ export function useStocksQuery() {
   });
 }
 
-export function useSymbolsQuery(enabled = true) {
+export function useSymbolsQuery(enabled: boolean = false) {
   return useQuery({
     queryKey: symbolsQueryKey,
     queryFn: fetchSymbolItems,
-    enabled,
+    enabled: enabled,
     staleTime: 1000 * 60 * 60 * 24,
     gcTime: 1000 * 60 * 60 * 24,
   });

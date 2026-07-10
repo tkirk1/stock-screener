@@ -1,5 +1,8 @@
 using System.Net.Mime;
+using System.Collections.Concurrent;
+using System.Security.Cryptography;
 using System.Text.Json;
+using Microsoft.Extensions.Caching.Memory;
 
 const string corsPolicy = "ExpoWeb";
 const string stockIdentifiersSessionKey = "StockIdentifiers";
@@ -27,6 +30,8 @@ builder.Services.AddCors(options =>
 });
 
 builder.Services.AddDistributedMemoryCache();
+builder.Services.AddMemoryCache();
+builder.Services.AddSingleton<SymbolResultsCache>();
 builder.Services.AddSession(options =>
 {
     options.IdleTimeout = TimeSpan.FromDays(1);
@@ -75,6 +80,7 @@ app.MapPost("/api/scan", async (
 
 app.MapGet("/api/symbols", async (
     IHttpClientFactory httpClientFactory,
+    SymbolResultsCache symbolResultsCache,
     HttpContext httpContext,
     CancellationToken cancellationToken) =>
 {
@@ -93,26 +99,29 @@ app.MapGet("/api/symbols", async (
         });
     }
 
-    var httpClient = httpClientFactory.CreateClient("TradingView");
-    var results = new SymbolResult[identifiers.Count];
-
-    await Parallel.ForEachAsync(
-        identifiers.Select((identifier, index) => (Identifier: identifier, Index: index)),
-        new ParallelOptions
+    var cacheKey = CreateSymbolResultsCacheKey(identifiers);
+    var serializedResults = await symbolResultsCache.GetOrCreateAsync(
+        cacheKey,
+        async token =>
         {
-            MaxDegreeOfParallelism = 8,
-            CancellationToken = cancellationToken
+            var httpClient = httpClientFactory.CreateClient("TradingView");
+            var results = new SymbolResult[identifiers.Count];
+
+            await Parallel.ForEachAsync(
+                identifiers.Select((identifier, index) => (Identifier: identifier, Index: index)),
+                new ParallelOptions { MaxDegreeOfParallelism = 8, CancellationToken = token },
+                async (item, loopToken) =>
+                {
+                    using var request = CreateSymbolRequest(item.Identifier);
+                    using var response = await httpClient.SendAsync(request, loopToken);
+                    var responseBody = await response.Content.ReadAsStringAsync(loopToken);
+                    results[item.Index] = CreateSymbolResult(item.Identifier, response, responseBody);
+                });
+
+            return JsonSerializer.Serialize(results, jsonSerializerOptions);
         },
-        async (item, token) =>
-        {
-            using var request = CreateSymbolRequest(item.Identifier);
-            using var response = await httpClient.SendAsync(request, token);
-            var responseBody = await response.Content.ReadAsStringAsync(token);
+        cancellationToken);
 
-            results[item.Index] = CreateSymbolResult(item.Identifier, response, responseBody);
-        });
-
-    var serializedResults = JsonSerializer.Serialize(results, jsonSerializerOptions);
     httpContext.Session.SetString(symbolResultsSessionKey, serializedResults);
 
     return Results.Content(serializedResults, MediaTypeNames.Application.Json);
@@ -160,6 +169,12 @@ static IReadOnlyList<string> GetCachedStockIdentifiers(ISession session)
     }
 
     return JsonSerializer.Deserialize<List<string>>(cachedIdentifiers) ?? [];
+}
+
+static string CreateSymbolResultsCacheKey(IReadOnlyList<string> identifiers)
+{
+    var identifierBytes = JsonSerializer.SerializeToUtf8Bytes(identifiers);
+    return $"symbols:{Convert.ToHexString(SHA256.HashData(identifierBytes))}";
 }
 
 static HttpRequestMessage CreateSymbolRequest(string identifier)
@@ -216,6 +231,41 @@ internal sealed record SymbolResult(
     bool IsSuccessStatusCode,
     JsonElement? Data,
     string? RawBody);
+
+internal sealed class SymbolResultsCache(IMemoryCache cache)
+{
+    private static readonly TimeSpan CacheLifetime = TimeSpan.FromDays(1);
+    private readonly ConcurrentDictionary<string, SemaphoreSlim> locks = new();
+
+    public async Task<string> GetOrCreateAsync(
+        string key,
+        Func<CancellationToken, Task<string>> factory,
+        CancellationToken cancellationToken)
+    {
+        if (cache.TryGetValue<string>(key, out var cached) && cached is not null)
+        {
+            return cached;
+        }
+
+        var gate = locks.GetOrAdd(key, _ => new SemaphoreSlim(1, 1));
+        await gate.WaitAsync(cancellationToken);
+        try
+        {
+            if (cache.TryGetValue<string>(key, out cached) && cached is not null)
+            {
+                return cached;
+            }
+
+            var value = await factory(cancellationToken);
+            cache.Set(key, value, CacheLifetime);
+            return value;
+        }
+        finally
+        {
+            gate.Release();
+        }
+    }
+}
 
 internal static class TradingViewSymbolRequest
 {
