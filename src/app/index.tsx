@@ -8,9 +8,12 @@ import { StockResults, StockSearchBar, SymbolDetailsDialog } from "@stocks/compo
 import { getErrorMessage, getRecommendationValue } from "@stocks/functions";
 import { useStocksQuery, useSymbolsQuery } from "@stocks/query";
 
+const COMPACT_TABLE_MIN_WIDTH = 768;
+const FULL_TABLE_MIN_WIDTH = 1200;
+
 export default function StocksScreen() {
   const theme = useTheme();
-  const { width, height } = useWindowDimensions();
+  const { width } = useWindowDimensions();
   const { data = [], error, isFetching, isLoading, refetch } = useStocksQuery();
   const symbolsQuery = useSymbolsQuery(data.length > 0);
   const [selectedStock, setSelectedStock] = useState<StockListItem | null>(null);
@@ -42,7 +45,12 @@ export default function StocksScreen() {
     );
   }, [searchFilterText, sortedStocks]);
   const selectedSymbolResult = selectedStock ? symbolResultsBySymbol.get(selectedStock.id) : undefined;
-  const useDataTable = Platform.OS === "web" && width > height;
+  const supportsDataTable = Platform.OS === "web" && width >= COMPACT_TABLE_MIN_WIDTH;
+  const displayMode = !supportsDataTable
+    ? "list"
+    : width < FULL_TABLE_MIN_WIDTH
+      ? "compact-table"
+      : "full-table";
 
   return (
     <View style={[styles.container, { backgroundColor: theme.colors.background }]}>
@@ -69,7 +77,7 @@ export default function StocksScreen() {
         </View>
       ) : (
         <StockResults
-          useDataTable={useDataTable}
+          displayMode={displayMode}
           stocks={filteredStocks}
           symbolResultsBySymbol={symbolResultsBySymbol}
           isRefreshing={isFetching}

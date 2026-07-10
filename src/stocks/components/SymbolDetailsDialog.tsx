@@ -2,7 +2,7 @@ import type { FC } from "react";
 import { ScrollView, StyleSheet, useWindowDimensions, View } from "react-native";
 import { Button, Dialog, Portal, Text } from "react-native-paper";
 
-import { formatSymbolValue, getSymbolFields } from "@stocks/functions";
+import { formatSymbolValue, getRecommendationColor, getSymbolFields } from "@stocks/functions";
 import { StockListItem, SymbolResult } from "@stocks/types";
 
 type SymbolDetailsDialogProps = {
@@ -15,6 +15,7 @@ export const SymbolDetailsDialog: FC<SymbolDetailsDialogProps> = ({ stock, symbo
   const { width, height } = useWindowDimensions();
   const fields = getSymbolFields(symbolResult);
   const isLandscape = width > height;
+  const recommendationColor = getRecommendationColor(symbolResult);
 
   return (
     <Portal>
@@ -23,19 +24,31 @@ export const SymbolDetailsDialog: FC<SymbolDetailsDialogProps> = ({ stock, symbo
         onDismiss={onDismiss}
         style={[styles.dialog, isLandscape && { width: "50%", alignSelf: "center" }]}
       >
-        <Dialog.Title>{stock?.id ?? "Symbol details"}</Dialog.Title>
+        <Dialog.Title style={recommendationColor ? { color: recommendationColor } : undefined}>
+          {stock?.id ?? "Symbol details"}
+        </Dialog.Title>
         <Dialog.ScrollArea style={styles.dialogScrollArea}>
           <ScrollView contentContainerStyle={styles.dialogContent} style={styles.dialogScrollView}>
             {symbolResult ? (
               <>
-                <DetailRow label="Status" value={`${symbolResult.statusCode}`} />
-                {fields.length > 0 ? (
-                  fields.map(([label, value]) => (
-                    <DetailRow key={label} label={label} value={formatSymbolValue(value)} />
-                  ))
-                ) : (
+                <View style={styles.detailsGrid}>
+                  <DetailRow
+                    label="Status"
+                    value={`${symbolResult.statusCode}`}
+                    color={recommendationColor}
+                  />
+                  {fields.map(([label, value]) => (
+                    <DetailRow
+                      key={label}
+                      label={label}
+                      value={formatSymbolValue(value)}
+                      color={recommendationColor}
+                    />
+                  ))}
+                </View>
+                {fields.length === 0 ? (
                   <Text style={styles.stateText}>No symbol data available.</Text>
-                )}
+                ) : null}
               </>
             ) : (
               <Text style={styles.stateText}>Loading symbol data...</Text>
@@ -43,7 +56,9 @@ export const SymbolDetailsDialog: FC<SymbolDetailsDialogProps> = ({ stock, symbo
           </ScrollView>
         </Dialog.ScrollArea>
         <Dialog.Actions style={styles.dialogActions}>
-          <Button onPress={onDismiss}>Close</Button>
+          <Button onPress={onDismiss} textColor={recommendationColor}>
+            Close
+          </Button>
         </Dialog.Actions>
       </Dialog>
     </Portal>
@@ -53,15 +68,16 @@ export const SymbolDetailsDialog: FC<SymbolDetailsDialogProps> = ({ stock, symbo
 type DetailRowProps = {
   label: string;
   value: string;
+  color: string | undefined;
 };
 
-const DetailRow: FC<DetailRowProps> = ({ label, value }) => {
+const DetailRow: FC<DetailRowProps> = ({ label, value, color }) => {
   return (
     <View style={styles.detailRow}>
-      <Text variant="labelMedium" style={styles.detailLabel}>
+      <Text variant="labelMedium" style={[styles.detailLabel, color ? { color } : undefined]}>
         {label}
       </Text>
-      <Text style={styles.detailValue}>{value}</Text>
+      <Text style={[styles.detailValue, color ? { color } : undefined]}>{value}</Text>
     </View>
   );
 };
@@ -80,10 +96,18 @@ const styles = StyleSheet.create({
     flexGrow: 0,
   },
   dialogContent: {
-    gap: 12,
+    gap: 16,
     paddingVertical: 12,
   },
+  detailsGrid: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    gap: 12,
+  },
   detailRow: {
+    flexBasis: "45%",
+    flexGrow: 1,
+    minWidth: 160,
     gap: 4,
   },
   detailLabel: {

@@ -4,7 +4,7 @@ import { StockDataTable } from "./StockDataTable";
 import { StockList } from "./StockList";
 
 type StockResultsProps = {
-  useDataTable: boolean;
+  displayMode: "list" | "compact-table" | "full-table";
   stocks: readonly StockListItem[];
   symbolResultsBySymbol: ReadonlyMap<string, SymbolResult>;
   isRefreshing: boolean;
@@ -13,6 +13,10 @@ type StockResultsProps = {
   emptyState: ReactElement;
 };
 
-export const StockResults: FC<StockResultsProps> = ({ useDataTable, ...props }) => {
-  return useDataTable ? <StockDataTable {...props} /> : <StockList {...props} />;
+export const StockResults: FC<StockResultsProps> = ({ displayMode, ...props }) => {
+  if (displayMode === "list") {
+    return <StockList {...props} />;
+  }
+
+  return <StockDataTable compact={displayMode === "compact-table"} {...props} />;
 };

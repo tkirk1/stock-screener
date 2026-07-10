@@ -1,13 +1,15 @@
 import type { FC, ReactElement } from "react";
 import { FlatList, RefreshControl, StyleSheet } from "react-native";
-import { Chip, Divider, List, Text, Tooltip } from "react-native-paper";
+import { Divider, List, Text, Tooltip } from "react-native-paper";
 
 import {
-  formatRecommendation,
+  formatRecommendationPercent,
   getRecommendationColor,
   type StockListItem,
   type SymbolResult,
 } from "@stocks";
+
+import { StockExchangeChip } from "./StockExchangeChip";
 
 type StockListProps = {
   stocks: readonly StockListItem[];
@@ -57,7 +59,7 @@ const StockListRow: FC<StockListRowProps> = ({ stock, symbolResult, onPress }) =
   return (
     <List.Item
       title={
-        <Tooltip title={`Recommend.All: ${formatRecommendation(symbolResult)}`}>
+        <Tooltip title={`TA Rating 1D: ${formatRecommendationPercent(symbolResult)}`}>
           <Text style={recommendationColor ? { color: recommendationColor } : undefined}>{stock.name}</Text>
         </Tooltip>
       }
@@ -65,9 +67,7 @@ const StockListRow: FC<StockListRowProps> = ({ stock, symbolResult, onPress }) =
       descriptionNumberOfLines={2}
       left={(props) => <List.Icon {...props} icon="chart-line" />}
       right={() => (
-        <Chip compact style={styles.exchangeChip}>
-          {stock.company.exchange}
-        </Chip>
+        <StockExchangeChip exchange={stock.company.exchange} symbolResult={symbolResult} style={styles.exchangeChip} />
       )}
       onPress={onPress}
     />
@@ -79,7 +79,6 @@ const styles = StyleSheet.create({
     flexGrow: 1,
   },
   exchangeChip: {
-    alignSelf: "center",
     marginRight: 16,
   },
 });

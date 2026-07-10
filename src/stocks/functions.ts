@@ -65,6 +65,12 @@ export function formatRecommendation(symbolResult: SymbolResult | undefined) {
   return typeof recommendation === "number" ? recommendation.toFixed(2) : "Loading";
 }
 
+export function formatRecommendationPercent(symbolResult: SymbolResult | undefined) {
+  const recommendation = symbolResult?.data?.["Recommend.All"];
+
+  return typeof recommendation === "number" ? `${(recommendation * 100).toFixed(0)}%` : "Loading";
+}
+
 export function getRecommendationValue(symbolResult: SymbolResult | undefined) {
   const recommendation = symbolResult?.data?.["Recommend.All"];
 
@@ -79,7 +85,7 @@ export function getRecommendationColor(symbolResult: SymbolResult | undefined) {
   }
 
   if (recommendation > 0.6) {
-    return "#006400";
+    return "#2E7D32";
   }
 
   if (recommendation > 0.5) {
