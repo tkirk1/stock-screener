@@ -39,3 +39,7 @@ yarn-error.*
 # generated native folders
 /ios
 /android
+
+# .NET / ASP.NET Core build output
+[Bb]in/
+[Oo]bj/
