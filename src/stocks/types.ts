@@ -133,6 +133,14 @@ export type SymbolResult = Readonly<{
   rawBody: string | null;
 }>;
 
+export type RawSymbolResult = Partial<SymbolResult> & {
+  Symbol?: SymbolResult["symbol"];
+  StatusCode?: SymbolResult["statusCode"];
+  IsSuccessStatusCode?: SymbolResult["isSuccessStatusCode"];
+  Data?: SymbolResult["data"];
+  RawBody?: SymbolResult["rawBody"];
+};
+
 export type SymbolData = Readonly<{
   "Recommend.All"?: number;
   "Recommend.MA"?: number;

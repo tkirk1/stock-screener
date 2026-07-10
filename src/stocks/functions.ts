@@ -1,4 +1,4 @@
-import type { StockListItem, StocksQueryResult, SymbolResult } from "@stocks/types";
+import type { RawSymbolResult, StockListItem, StocksQueryResult, SymbolResult } from "@stocks/types";
 
 export function mapStockListItems(result: StocksQueryResult): StockListItem[] {
   return result.data.map((stock) => {
@@ -107,4 +107,30 @@ export function formatSymbolValue(value: unknown) {
   }
 
   return JSON.stringify(value);
+}
+
+export function formatStockPrice(value: number, currency: string) {
+  return new Intl.NumberFormat(undefined, {
+    style: "currency",
+    currency: currency || "USD",
+    maximumFractionDigits: 2,
+  }).format(value);
+}
+
+export function formatStockPercent(value: number) {
+  return `${value >= 0 ? "+" : ""}${value.toFixed(2)}%`;
+}
+
+export function getStockPerformanceColor(value: number) {
+  return value >= 0 ? "#2E7D32" : "#C62828";
+}
+
+export function normalizeSymbolResult(result: RawSymbolResult): SymbolResult {
+  return {
+    symbol: result.symbol ?? result.Symbol ?? "",
+    statusCode: result.statusCode ?? result.StatusCode ?? 0,
+    isSuccessStatusCode: result.isSuccessStatusCode ?? result.IsSuccessStatusCode ?? false,
+    data: result.data ?? result.Data ?? null,
+    rawBody: result.rawBody ?? result.RawBody ?? null,
+  };
 }
