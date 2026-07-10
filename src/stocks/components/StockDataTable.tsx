@@ -1,6 +1,6 @@
 import type { FC, ReactElement } from "react";
 import { RefreshControl, ScrollView, StyleSheet, View } from "react-native";
-import { DataTable, useTheme } from "react-native-paper";
+import { Chip, DataTable, useTheme } from "react-native-paper";
 import { StockListItem, SymbolResult, } from "@stocks/types"
 import { formatRecommendation, formatStockPercent, formatStockPrice } from "@stocks/functions";
 import { getRecommendationColor, getStockPerformanceColor } from "@stocks/functions";
@@ -40,8 +40,13 @@ export const StockDataTable: FC<StockDataTableProps> = ({
             <DataTable.Title style={styles.exchangeColumn}>Exchange</DataTable.Title>
             <DataTable.Title numeric style={styles.numberColumn}>Last</DataTable.Title>
             <DataTable.Title numeric style={styles.numberColumn}>Change</DataTable.Title>
+            <DataTable.Title numeric style={styles.numberColumn}>1W</DataTable.Title>
+            <DataTable.Title numeric style={styles.numberColumn}>1M</DataTable.Title>
+            <DataTable.Title numeric style={styles.numberColumn}>3M</DataTable.Title>
+            <DataTable.Title numeric style={styles.numberColumn}>6M</DataTable.Title>
+            <DataTable.Title numeric style={styles.numberColumn}>YTD</DataTable.Title>
             <DataTable.Title numeric style={styles.numberColumn}>1Y</DataTable.Title>
-            <DataTable.Title numeric style={styles.recommendationColumn}>Rating</DataTable.Title>
+            <DataTable.Title numeric style={styles.recommendationColumn}>TA Rating (1D)</DataTable.Title>
         </DataTable.Header>
       )}
       {stocks.length > 0 ? (
@@ -52,12 +57,39 @@ export const StockDataTable: FC<StockDataTableProps> = ({
 
               return (
                 <DataTable.Row key={stock.id} onPress={() => onSelectStock(stock)}>
-                  <DataTable.Cell style={styles.symbolColumn}>{stock.id}</DataTable.Cell>
-                  <DataTable.Cell style={styles.companyColumn}>{stock.name}</DataTable.Cell>
-                  <DataTable.Cell style={styles.exchangeColumn}>{stock.company.exchange}</DataTable.Cell>
+                  <DataTable.Cell
+                    style={styles.symbolColumn}
+                    textStyle={recommendationColor ? { color: recommendationColor } : undefined}
+                  >
+                    {stock.id}
+                  </DataTable.Cell>
+                  <DataTable.Cell
+                    style={styles.companyColumn}
+                    textStyle={recommendationColor ? { color: recommendationColor } : undefined}
+                  >
+                    {stock.name}
+                  </DataTable.Cell>
+                  <DataTable.Cell style={styles.exchangeColumn}>
+                    <Chip compact>{stock.company.exchange}</Chip>
+                  </DataTable.Cell>
                   <DataTable.Cell numeric style={styles.numberColumn}>{formatStockPrice(stock.close, stock.currency)}</DataTable.Cell>
                   <DataTable.Cell numeric style={styles.numberColumn} textStyle={{ color: getStockPerformanceColor(stock.change) }}>
                     {formatStockPercent(stock.change)}
+                  </DataTable.Cell>
+                  <DataTable.Cell numeric style={styles.numberColumn} textStyle={{ color: getStockPerformanceColor(stock.perfWeek) }}>
+                    {formatStockPercent(stock.perfWeek)}
+                  </DataTable.Cell>
+                  <DataTable.Cell numeric style={styles.numberColumn} textStyle={{ color: getStockPerformanceColor(stock.perfMonth) }}>
+                    {formatStockPercent(stock.perfMonth)}
+                  </DataTable.Cell>
+                  <DataTable.Cell numeric style={styles.numberColumn} textStyle={{ color: getStockPerformanceColor(stock.perf3Months) }}>
+                    {formatStockPercent(stock.perf3Months)}
+                  </DataTable.Cell>
+                  <DataTable.Cell numeric style={styles.numberColumn} textStyle={{ color: getStockPerformanceColor(stock.perf6Months) }}>
+                    {formatStockPercent(stock.perf6Months)}
+                  </DataTable.Cell>
+                  <DataTable.Cell numeric style={styles.numberColumn} textStyle={{ color: getStockPerformanceColor(stock.perfYtd) }}>
+                    {formatStockPercent(stock.perfYtd)}
                   </DataTable.Cell>
                   <DataTable.Cell numeric style={styles.numberColumn} textStyle={{ color: getStockPerformanceColor(stock.perfYear) }}>
                     {formatStockPercent(stock.perfYear)}
@@ -87,7 +119,7 @@ const styles = StyleSheet.create({
     overflow: "scroll",
   },
   tableWidth: {
-    minWidth: 940,
+    minWidth: 1450,
   },
   header: {
     zIndex: 1,

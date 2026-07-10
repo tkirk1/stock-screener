@@ -3,8 +3,8 @@ import { StatusBar } from "expo-status-bar";
 import { useMemo, useState } from "react";
 import { Platform, StyleSheet, useWindowDimensions, View } from "react-native";
 import { ActivityIndicator, Appbar, Button, Text, useTheme } from "react-native-paper";
-import { StockListItem, SymbolResult } from "@stocks/types"
-import { StockResults, SymbolDetailsDialog } from "@stocks/components";
+import { StockListItem } from "@stocks/types"
+import { StockResults, StockSearchBar, SymbolDetailsDialog } from "@stocks/components";
 import { getErrorMessage, getRecommendationValue } from "@stocks/functions";
 import { useStocksQuery, useSymbolsQuery } from "@stocks/query";
 
@@ -14,6 +14,7 @@ export default function StocksScreen() {
   const { data = [], error, isFetching, isLoading, refetch } = useStocksQuery();
   const symbolsQuery = useSymbolsQuery(data.length > 0);
   const [selectedStock, setSelectedStock] = useState<StockListItem | null>(null);
+  const [searchFilterText, setSearchFilterText] = useState<string>("");
   const symbolResultsBySymbol = useMemo(
     () => new Map((symbolsQuery.data ?? []).map((symbolResult) => [symbolResult.symbol, symbolResult])),
     [symbolsQuery.data],
@@ -27,6 +28,19 @@ export default function StocksScreen() {
       ),
     [data, symbolResultsBySymbol],
   );
+  const filteredStocks = useMemo(() => {
+    const normalizedSearchQuery = searchFilterText.trim().toLocaleLowerCase();
+
+    if (!normalizedSearchQuery) {
+      return sortedStocks;
+    }
+
+    return sortedStocks.filter((stock) =>
+      [stock.id, stock.name, stock.company.exchange, stock.company.description].some((value) =>
+        value.toLocaleLowerCase().includes(normalizedSearchQuery),
+      ),
+    );
+  }, [searchFilterText, sortedStocks]);
   const selectedSymbolResult = selectedStock ? symbolResultsBySymbol.get(selectedStock.id) : undefined;
   const useDataTable = Platform.OS === "web" && width > height;
 
@@ -35,7 +49,8 @@ export default function StocksScreen() {
       <Stack.Screen options={{ title: "Stock Screener" }} />
       <StatusBar style="auto" />
       <Appbar.Header elevated>
-        <Appbar.Content title={`Stock Screener (${sortedStocks.length})`} />
+        <Appbar.Content title={`Stock Screener (${filteredStocks.length})`} />
+        <StockSearchBar value={searchFilterText} onChangeText={setSearchFilterText} />
         <Appbar.Action disabled={isFetching} icon="refresh" onPress={() => refetch()} />
       </Appbar.Header>
 
@@ -55,7 +70,7 @@ export default function StocksScreen() {
       ) : (
         <StockResults
           useDataTable={useDataTable}
-          stocks={sortedStocks}
+          stocks={filteredStocks}
           symbolResultsBySymbol={symbolResultsBySymbol}
           isRefreshing={isFetching}
           onRefresh={refetch}
