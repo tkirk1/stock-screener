@@ -6,6 +6,7 @@ import {
   ActivityIndicator,
   Appbar,
   Button,
+  Chip,
   Dialog,
   Divider,
   List,
@@ -15,7 +16,16 @@ import {
   useTheme,
 } from "react-native-paper";
 
-import type { StockListItem, SymbolResult } from "@stocks";
+import {
+  formatRecommendation,
+  formatSymbolValue,
+  getErrorMessage,
+  getRecommendationColor,
+  getRecommendationValue,
+  getSymbolFields,
+  type StockListItem,
+  type SymbolResult,
+} from "@stocks";
 import { useStocksQuery, useSymbolsQuery } from "@stocks/query";
 
 export default function StocksScreen() {
@@ -43,7 +53,7 @@ export default function StocksScreen() {
       <Stack.Screen options={{ title: "Stock Screener" }} />
       <StatusBar style="auto" />
       <Appbar.Header elevated>
-        <Appbar.Content title="Stock Screener" subtitle={`${sortedStocks.length} cached results`} />
+        <Appbar.Content title={`Stock Screener (${sortedStocks.length})`} />
         <Appbar.Action disabled={isFetching} icon="refresh" onPress={() => refetch()} />
       </Appbar.Header>
 
@@ -96,16 +106,23 @@ function StockRow({
   symbolResult: SymbolResult | undefined;
   onPress: () => void;
 }) {
+  const recommendationColor = getRecommendationColor(symbolResult);
+
   return (
     <List.Item
       title={
         <Tooltip title={`Recommend.All: ${formatRecommendation(symbolResult)}`}>
-          <Text>{stock.name}</Text>
+          <Text style={recommendationColor ? { color: recommendationColor } : undefined}>{stock.name}</Text>
         </Tooltip>
       }
       description={stock.description}
       descriptionNumberOfLines={2}
       left={(props) => <List.Icon {...props} icon="chart-line" />}
+      right={() => (
+        <Chip compact style={styles.exchangeChip}>
+          {stock.company.exchange}
+        </Chip>
+      )}
       onPress={onPress}
     />
   );
@@ -131,13 +148,12 @@ function SymbolDetailsDialog({
         onDismiss={onDismiss}
         style={[styles.dialog, isLandscape && { width: "50%", alignSelf: "center" }]}
       >
-        <Dialog.Title>{stock?.name ?? "Symbol details"}</Dialog.Title>
+        <Dialog.Title>{stock?.id ?? "Symbol details"}</Dialog.Title>
         <Dialog.ScrollArea style={styles.dialogScrollArea}>
           <ScrollView
             contentContainerStyle={styles.dialogContent}
             style={styles.dialogScrollView}
           >
-            <Text variant="labelLarge">{stock?.id}</Text>
             {symbolResult ? (
               <>
                 <DetailRow label="Status" value={`${symbolResult.statusCode}`} />
@@ -182,42 +198,6 @@ function EmptyState() {
   );
 }
 
-function getErrorMessage(error: unknown) {
-  return error instanceof Error ? error.message : "An unknown error occurred.";
-}
-
-function formatRecommendation(symbolResult: SymbolResult | undefined) {
-  const recommendation = symbolResult?.data?.["Recommend.All"];
-
-  return typeof recommendation === "number" ? recommendation.toFixed(2) : "Loading";
-}
-
-function getRecommendationValue(symbolResult: SymbolResult | undefined) {
-  const recommendation = symbolResult?.data?.["Recommend.All"];
-
-  return typeof recommendation === "number" ? recommendation : Number.NEGATIVE_INFINITY;
-}
-
-function getSymbolFields(symbolResult: SymbolResult | undefined) {
-  return Object.entries(symbolResult?.data ?? {}).sort(([left], [right]) => left.localeCompare(right));
-}
-
-function formatSymbolValue(value: unknown) {
-  if (typeof value === "number") {
-    return Number.isInteger(value) ? value.toString() : value.toFixed(4);
-  }
-
-  if (typeof value === "string") {
-    return value;
-  }
-
-  if (value === null || value === undefined) {
-    return "-";
-  }
-
-  return JSON.stringify(value);
-}
-
 const styles = StyleSheet.create({
   container: {
     flex: 1,
@@ -234,6 +214,10 @@ const styles = StyleSheet.create({
   },
   stateText: {
     textAlign: "center",
+  },
+  exchangeChip: {
+    alignSelf: "center",
+    marginRight: 16,
   },
   dialog: {
     height: "80%",
